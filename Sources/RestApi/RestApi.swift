@@ -23,23 +23,28 @@ open class RestApi<T: Codable> {
     public private(set) var path: String
     /// A dictionary that holds the header that will be used in every request.
     public private(set) var header: [String: String]
+    /// A boolean flag that indicates if debug logs should be printed.
+    public private(set) var debug: Bool
     
     /// An init that is used to instanciate RestApi objects.
     /// - Parameters:
     ///   - baseUrl: A string that will be concatenated with path, and will be used in every request, unless url parameter passed by the function is not nil.
-    ///   - path: /// A string that will be concatenated with baseUrl, and will be used in every request, unless path parameter passed by the function is not nil.
-    ///   - header: /// A dictionary that holds the header that will be used in every request.
+    ///   - path: A string that will be concatenated with baseUrl, and will be used in every request, unless path parameter passed by the function is not nil.
+    ///   - header: A dictionary that holds the header that will be used in every request.
+    ///   - debug: A boolean flag that will print debug logs if true.
     public init(
         baseUrl: String = "",
         path: String = "",
         header: [String: String] = [
             "Content-Type": "application/json; charset=utf-8",
             "Accept": "application/json; charset=utf-8"
-        ]
+        ],
+        debug: Bool = false
     ) {
         self.baseUrl = baseUrl
         self.path = path
         self.header = header
+        self.debug = debug
     }
 
     // MARK: - GET ALL
@@ -51,17 +56,19 @@ open class RestApi<T: Codable> {
     ///   - suffix: An optional string that will be concatenated with url and path.
     ///   - params: An optional dictionary of query parameters that will be used in the request url.
     ///   - header: A dictionary that will be apprend to self.header dictionary and will be used as header in the request.
+    ///   - debug: A boolean flag that will print debug logs if true.
     /// - Returns: A list of objects of resource type.
     public func get(
         url: String? = nil,
         path: String? = nil,
         suffix: String? = nil,
         params: [String: String]? = nil,
-        header: [String: String]? = nil
+        header: [String: String]? = nil,
+        debug: Bool? = nil
     ) async throws -> [T] {
         let url = try buildUrl(url: url, path: path, suffix: suffix, params: params)
         let urlRequest = try buildUrlRequest(url: url, verb: .get, header: header)
-        let (data, _) = try await URLSession.shared.data(for: urlRequest)
+        let data = try await data(for: urlRequest, debug: debug)
         return try JSONDecoder().decode([T].self, from: data)
     }
     
@@ -75,6 +82,7 @@ open class RestApi<T: Codable> {
     ///   - suffix: An optional string that will be concatenated with url and path.
     ///   - params: An optional dictionary of query parameters that will be used in the request url.
     ///   - header: A dictionary that will be apprend to self.header dictionary and will be used as header in the request.
+    ///   - debug: A boolean flag that will print debug logs if true.
     /// - Returns: An object of resource type.
     public func get(
         url: String? = nil,
@@ -82,11 +90,12 @@ open class RestApi<T: Codable> {
         resourceId: String?,
         suffix: String? = nil,
         params: [String: String]? = nil,
-        header: [String: String]? = nil
+        header: [String: String]? = nil,
+        debug: Bool? = nil
     ) async throws -> T {
         let url = try buildUrl(url: url, path: path, resourceId: resourceId, suffix: suffix, params: params)
         let urlRequest = try buildUrlRequest(url: url, verb: .get, header: header)
-        let (data, _) = try await URLSession.shared.data(for: urlRequest)
+        let data = try await data(for: urlRequest, debug: debug)
         return try JSONDecoder().decode(T.self, from: data)
     }
     
@@ -100,6 +109,7 @@ open class RestApi<T: Codable> {
     ///   - params: An optional dictionary of query parameters that will be used in the request url.
     ///   - resource: An optional object that will be used in body request.
     ///   - header: A dictionary that will be apprend to self.header dictionary and will be used as header in the request.
+    ///   - debug: A boolean flag that will print debug logs if true.
     /// - Returns: An optional object of resource type.
     public func post(
         url: String? = nil,
@@ -107,14 +117,15 @@ open class RestApi<T: Codable> {
         suffix: String? = nil,
         params: [String: String]? = nil,
         resource: T? = nil,
-        header: [String: String]? = nil
+        header: [String: String]? = nil,
+        debug: Bool? = nil
     ) async throws -> T? {
         let url = try buildUrl(url: url, path: path, suffix: suffix, params: params)
         var urlRequest = try buildUrlRequest(url: url, verb: .post, header: header)
         if let resource = resource {
             urlRequest.httpBody = try JSONEncoder().encode(resource)
         }
-        let (data, _) = try await URLSession.shared.data(for: urlRequest)
+        let data = try await data(for: urlRequest, debug: debug)
         return try? JSONDecoder().decode(T.self, from: data)
     }
     
@@ -126,6 +137,7 @@ open class RestApi<T: Codable> {
     ///   - params: An optional dictionary of query parameters that will be used in the request url.
     ///   - payload: An optional dictionary that will be used in body request.
     ///   - header: A dictionary that will be apprend to self.header dictionary and will be used as header in the request.
+    ///   - debug: A boolean flag that will print debug logs if true.
     /// - Returns: An optional object of resource type.
     public func post(
         url: String? = nil,
@@ -133,14 +145,15 @@ open class RestApi<T: Codable> {
         suffix: String? = nil,
         params: [String: String]? = nil,
         payload: [String: Any]? = nil,
-        header: [String: String]? = nil
+        header: [String: String]? = nil,
+        debug: Bool? = nil
     ) async throws -> T? {
         let url = try buildUrl(url: url, path: path, suffix: suffix, params: params)
         var urlRequest = try buildUrlRequest(url: url, verb: .post, header: header)
         if let payload = payload {
             urlRequest.httpBody = try JSONSerialization.data(withJSONObject: payload)
         }
-        let (data, _) = try await URLSession.shared.data(for: urlRequest)
+        let data = try await data(for: urlRequest, debug: debug)
         return try? JSONDecoder().decode(T.self, from: data)
     }
     
@@ -155,6 +168,7 @@ open class RestApi<T: Codable> {
     ///   - params: An optional dictionary of query parameters that will be used in the request url.
     ///   - resource: An optional object that will be used in body request.
     ///   - header: A dictionary that will be apprend to self.header dictionary and will be used as header in the request.
+    ///   - debug: A boolean flag that will print debug logs if true.
     /// - Returns: An optional object of resource type.
     public func put(
         url: String? = nil,
@@ -163,14 +177,15 @@ open class RestApi<T: Codable> {
         suffix: String? = nil,
         params: [String: String]? = nil,
         resource: T? = nil,
-        header: [String: String]? = nil
+        header: [String: String]? = nil,
+        debug: Bool? = nil
     ) async throws -> T? {
         let url = try buildUrl(url: url, path: path, resourceId: resourceId, suffix: suffix, params: params)
         var urlRequest = try buildUrlRequest(url: url, verb: .put, header: header)
         if let resource = resource {
             urlRequest.httpBody = try JSONEncoder().encode(resource)
         }
-        let (data, _) = try await URLSession.shared.data(for: urlRequest)
+        let data = try await data(for: urlRequest, debug: debug)
         return try? JSONDecoder().decode(T.self, from: data)
     }
     
@@ -183,6 +198,7 @@ open class RestApi<T: Codable> {
     ///   - params: An optional dictionary of query parameters that will be used in the request url.
     ///   - payload: An optional dictionary that will be used in body request.
     ///   - header: A dictionary that will be apprend to self.header dictionary and will be used as header in the request.
+    ///   - debug: A boolean flag that will print debug logs if true.
     /// - Returns: An optional object of resource type.
     public func put(
         url: String? = nil,
@@ -191,14 +207,15 @@ open class RestApi<T: Codable> {
         suffix: String? = nil,
         params: [String: String]? = nil,
         payload: [String: Any]? = nil,
-        header: [String: String]? = nil
+        header: [String: String]? = nil,
+        debug: Bool? = nil
     ) async throws -> T? {
         let url = try buildUrl(url: url, path: path, resourceId: resourceId, suffix: suffix, params: params)
         var urlRequest = try buildUrlRequest(url: url, verb: .put, header: header)
         if let payload = payload {
             urlRequest.httpBody = try JSONSerialization.data(withJSONObject: payload)
         }
-        let (data, _) = try await URLSession.shared.data(for: urlRequest)
+        let data = try await data(for: urlRequest, debug: debug)
         return try? JSONDecoder().decode(T.self, from: data)
     }
     
@@ -214,6 +231,7 @@ open class RestApi<T: Codable> {
     ///   - params: An optional dictionary of query parameters that will be used in the request url.
     ///   - resource: An optional object that will be used in body request.
     ///   - header: A dictionary that will be apprend to self.header dictionary and will be used as header in the request.
+    ///   - debug: A boolean flag that will print debug logs if true.
     /// - Returns: An optional object of resource type.
     public func PATCH(
         url: String? = nil,
@@ -222,14 +240,15 @@ open class RestApi<T: Codable> {
         suffix: String? = nil,
         params: [String: String]? = nil,
         resource: T? = nil,
-        header: [String: String]? = nil
+        header: [String: String]? = nil,
+        debug: Bool? = nil
     ) async throws -> T? {
         let url = try buildUrl(url: url, path: path, resourceId: resourceId, suffix: suffix, params: params)
         var urlRequest = try buildUrlRequest(url: url, verb: .patch, header: header)
         if let resource = resource {
             urlRequest.httpBody = try JSONEncoder().encode(resource)
         }
-        let (data, _) = try await URLSession.shared.data(for: urlRequest)
+        let data = try await data(for: urlRequest, debug: debug)
         return try? JSONDecoder().decode(T.self, from: data)
     }
     
@@ -242,6 +261,7 @@ open class RestApi<T: Codable> {
     ///   - params: An optional dictionary of query parameters that will be used in the request url.
     ///   - payload: An optional dictionary that will be used in body request.
     ///   - header: A dictionary that will be apprend to self.header dictionary and will be used as header in the request.
+    ///   - debug: A boolean flag that will print debug logs if true.
     /// - Returns: An optional object of resource type.
     public func PATCH(
         url: String? = nil,
@@ -250,14 +270,15 @@ open class RestApi<T: Codable> {
         suffix: String? = nil,
         params: [String: String]? = nil,
         payload: [String: Any]? = nil,
-        header: [String: String]? = nil
+        header: [String: String]? = nil,
+        debug: Bool? = nil
     ) async throws -> T? {
         let url = try buildUrl(url: url, path: path, resourceId: resourceId, suffix: suffix, params: params)
         var urlRequest = try buildUrlRequest(url: url, verb: .patch, header: header)
         if let payload = payload {
             urlRequest.httpBody = try JSONSerialization.data(withJSONObject: payload)
         }
-        let (data, _) = try await URLSession.shared.data(for: urlRequest)
+        let data = try await data(for: urlRequest, debug: debug)
         return try? JSONDecoder().decode(T.self, from: data)
     }
     
@@ -272,6 +293,7 @@ open class RestApi<T: Codable> {
     ///   - params: An optional dictionary of query parameters that will be used in the request url.
     ///   - resource: An optional object that will be used in body request.
     ///   - header: A dictionary that will be apprend to self.header dictionary and will be used as header in the request.
+    ///   - debug: A boolean flag that will print debug logs if true.
     /// - Returns: An optional object of resource type.
     public func delete(
         url: String? = nil,
@@ -280,14 +302,15 @@ open class RestApi<T: Codable> {
         suffix: String? = nil,
         params: [String: String]? = nil,
         resource: T? = nil,
-        header: [String: String]? = nil
+        header: [String: String]? = nil,
+        debug: Bool? = nil
     ) async throws -> T? {
         let url = try buildUrl(url: url, path: path, resourceId: resourceId, suffix: suffix, params: params)
         var urlRequest = try buildUrlRequest(url: url, verb: .delete, header: header)
         if let resource = resource {
             urlRequest.httpBody = try JSONEncoder().encode(resource)
         }
-        let (data, _) = try await URLSession.shared.data(for: urlRequest)
+        let data = try await data(for: urlRequest, debug: debug)
         return try? JSONDecoder().decode(T.self, from: data)
     }
     
@@ -300,6 +323,7 @@ open class RestApi<T: Codable> {
     ///   - params: An optional dictionary of query parameters that will be used in the request url.
     ///   - payload: An optional dictionary that will be used in body request.
     ///   - header: A dictionary that will be apprend to self.header dictionary and will be used as header in the request.
+    ///   - debug: A boolean flag that will print debug logs if true.
     /// - Returns: An optional object of resource type.
     public func delete(
         url: String? = nil,
@@ -308,14 +332,15 @@ open class RestApi<T: Codable> {
         suffix: String? = nil,
         params: [String: String]? = nil,
         payload: [String: Any]? = nil,
-        header: [String: String]? = nil
+        header: [String: String]? = nil,
+        debug: Bool? = nil
     ) async throws -> T? {
         let url = try buildUrl(url: url, path: path, resourceId: resourceId, suffix: suffix, params: params)
         var urlRequest = try buildUrlRequest(url: url, verb: .delete, header: header)
         if let payload = payload {
             urlRequest.httpBody = try JSONSerialization.data(withJSONObject: payload)
         }
-        let (data, _) = try await URLSession.shared.data(for: urlRequest)
+        let data = try await data(for: urlRequest, debug: debug)
         return try? JSONDecoder().decode(T.self, from: data)
     }
     
@@ -376,5 +401,31 @@ open class RestApi<T: Codable> {
         }
         urlRequest.httpMethod = verb.rawValue
         return urlRequest
+    }
+    
+    /// A function that requests the urlRequest and returns a data. An optional debug flag can be true and will print the request logs.
+    /// - Parameters:
+    ///   - urlRequest: An URLRequest.
+    ///   - debug: A boolean flag that will print debug logs if true.
+    /// - Returns: A response data.
+    private func data(for urlRequest: URLRequest, debug: Bool?) async throws -> Data {
+        let debug = debug ?? self.debug
+        if debug {
+            debugPrint("Request Verb: \(urlRequest.httpMethod ?? "Unknown Request Verb")")
+            debugPrint("Request URL: \(urlRequest.url?.absoluteString ?? "Unknown Request URL")")
+            debugPrint("Request Header: \(urlRequest.allHTTPHeaderFields?.description ?? "Unknown Request Header")")
+            if let data = urlRequest.httpBody {
+                debugPrint("Request Body: \(String(data: data, encoding: .utf8) ?? "Unknown Request Body")")
+            } else {
+                debugPrint("Request Body: Unknown Request Body")
+            }
+        }
+        let (data, response) = try await URLSession.shared.data(for: urlRequest)
+        if debug {
+            debugPrint("Response: \(response.debugDescription)")
+            debugPrint("Response Data:")
+            debugPrint(String(data: data, encoding: .utf8) ?? "Unknown response data")
+        }
+        return data
     }
 }
