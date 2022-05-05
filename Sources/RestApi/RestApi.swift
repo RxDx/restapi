@@ -1,5 +1,16 @@
 import Foundation
 
+public protocol URLSessionProtocol {
+    func data(for request: URLRequest, delegate: URLSessionTaskDelegate?) async throws -> (Data, URLResponse)
+    func data(for request: URLRequest) async throws -> (Data, URLResponse)
+}
+
+extension URLSession: URLSessionProtocol {
+    public func data(for request: URLRequest) async throws -> (Data, URLResponse) {
+        try await data(for: request, delegate: nil)
+    }
+}
+
 /// A class that provides easy REST requests with generics resources.
 open class RestApi<T: Codable> {
     
@@ -25,6 +36,8 @@ open class RestApi<T: Codable> {
     public private(set) var header: [String: String]
     /// A boolean flag that indicates if debug logs should be printed.
     public private(set) var debug: Bool
+    /// A URLSession that will request data.
+    private let urlSession: URLSessionProtocol
     
     /// An init that is used to instanciate RestApi objects.
     /// - Parameters:
@@ -39,12 +52,14 @@ open class RestApi<T: Codable> {
             "Content-Type": "application/json; charset=utf-8",
             "Accept": "application/json; charset=utf-8"
         ],
-        debug: Bool = false
+        debug: Bool = false,
+        urlSession: URLSessionProtocol = URLSession.shared
     ) {
         self.baseUrl = baseUrl
         self.path = path
         self.header = header
         self.debug = debug
+        self.urlSession = urlSession
     }
 
     // MARK: - GET ALL
@@ -420,7 +435,7 @@ open class RestApi<T: Codable> {
                 debugPrint("Request Body: Unknown Request Body")
             }
         }
-        let (data, response) = try await URLSession.shared.data(for: urlRequest)
+        let (data, response) = try await urlSession.data(for: urlRequest)
         if debug {
             debugPrint("Response: \(response.debugDescription)")
             debugPrint("Response Data:")
