@@ -233,7 +233,7 @@ open class RestApi<T: Codable> {
     ///   - header: A dictionary that will be apprend to self.header dictionary and will be used as header in the request.
     ///   - debug: A boolean flag that will print debug logs if true.
     /// - Returns: An optional object of resource type.
-    public func PATCH(
+    public func patch(
         url: String? = nil,
         path: String? = nil,
         resourceId: String? = nil,
@@ -263,7 +263,7 @@ open class RestApi<T: Codable> {
     ///   - header: A dictionary that will be apprend to self.header dictionary and will be used as header in the request.
     ///   - debug: A boolean flag that will print debug logs if true.
     /// - Returns: An optional object of resource type.
-    public func PATCH(
+    public func patch(
         url: String? = nil,
         path: String? = nil,
         resourceId: String? = nil,
