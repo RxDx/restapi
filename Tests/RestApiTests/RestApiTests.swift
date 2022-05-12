@@ -4,7 +4,9 @@ import XCTest
 final class RestApiTests: XCTestCase {
     
     class URLSessionMock: URLSessionProtocol {
+        var urlSessionCalled = false
         func data(for request: URLRequest, delegate: URLSessionTaskDelegate?) async throws -> (Data, URLResponse) {
+            urlSessionCalled = true
             var dataResponse = Data()
             switch request.httpMethod {
             case "GET":
@@ -80,10 +82,24 @@ final class RestApiTests: XCTestCase {
         XCTAssertEqual(response, "Success")
     }
     
+    func testPostWithResourceShouldReturn() async throws {
+        let urlSession = URLSessionMock()
+        let sut = RestApi(urlSession: urlSession)
+        try await sut.post(resource: "")
+        XCTAssertEqual(urlSession.urlSessionCalled, true)
+    }
+    
     func testPostWithPayloadShouldReturnSuccess() async throws {
         let sut = RestApi(urlSession: URLSessionMock())
         let response: String? = try await sut.post(payload: ["key": "value"])
         XCTAssertEqual(response, "Success")
+    }
+    
+    func testPostWithPayloadShouldReturn() async throws {
+        let urlSession = URLSessionMock()
+        let sut = RestApi(urlSession: urlSession)
+        try await sut.post(payload: ["key": "value"])
+        XCTAssertEqual(urlSession.urlSessionCalled, true)
     }
     
     func testPutWithResourceShouldReturnSuccess() async throws {
@@ -92,10 +108,24 @@ final class RestApiTests: XCTestCase {
         XCTAssertEqual(response, "Success")
     }
     
+    func testPutWithResourceShouldReturn() async throws {
+        let urlSession = URLSessionMock()
+        let sut = RestApi(urlSession: urlSession)
+        try await sut.put(resourceId: "0", resource: "")
+        XCTAssertEqual(urlSession.urlSessionCalled, true)
+    }
+    
     func testPutWithPayloadShouldReturnSuccess() async throws {
         let sut = RestApi(urlSession: URLSessionMock())
         let response: String? = try await sut.put(resourceId: "0", payload: ["key": "value"])
         XCTAssertEqual(response, "Success")
+    }
+    
+    func testPutWithPayloadShouldReturn() async throws {
+        let urlSession = URLSessionMock()
+        let sut = RestApi(urlSession: urlSession)
+        try await sut.put(resourceId: "0", payload: ["key": "value"])
+        XCTAssertEqual(urlSession.urlSessionCalled, true)
     }
     
     func testPatchWithResourceShouldReturnSuccess() async throws {
@@ -104,15 +134,36 @@ final class RestApiTests: XCTestCase {
         XCTAssertEqual(response, "Success")
     }
     
+    func testPatchWithResourceShouldReturn() async throws {
+        let urlSession = URLSessionMock()
+        let sut = RestApi(urlSession: urlSession)
+        try await sut.patch(resourceId: "0", resource: "")
+        XCTAssertEqual(urlSession.urlSessionCalled, true)
+    }
+    
     func testPatchWithPayloadShouldReturnSuccess() async throws {
         let sut = RestApi(urlSession: URLSessionMock())
         let response: String? = try await sut.patch(resourceId: "0", payload: ["key": "value"])
         XCTAssertEqual(response, "Success")
     }
     
+    func testPatchWithPayloadShouldReturn() async throws {
+        let urlSession = URLSessionMock()
+        let sut = RestApi(urlSession: urlSession)
+        try await sut.patch(resourceId: "0", payload: ["key": "value"])
+        XCTAssertEqual(urlSession.urlSessionCalled, true)
+    }
+    
     func testDeleteShouldReturnSuccess() async throws {
         let sut = RestApi(urlSession: URLSessionMock())
         let response: String? = try await sut.delete(resourceId: "0")
         XCTAssertEqual(response, "Success")
+    }
+    
+    func testDeleteShouldReturn() async throws {
+        let urlSession = URLSessionMock()
+        let sut = RestApi(urlSession: urlSession)
+        try await sut.delete(resourceId: "0")
+        XCTAssertEqual(urlSession.urlSessionCalled, true)
     }
 }

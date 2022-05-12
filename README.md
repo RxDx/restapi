@@ -18,14 +18,14 @@ Simple and lightweight swift async rest implementation.
 #### Simple usage
 
 ```swift
-let service = RestApi<Resource>(baseUrl: "https://url.com/resources")
+let service = RestApi(baseUrl: "https://url.com/resources")
 
 ```
 
 #### Complete usage
 
 ```swift
-let service = RestApi<Resource>(
+let service = RestApi(
     baseUrl: "https://url.com",
     path: "resources",
     header: [
@@ -40,11 +40,11 @@ let service = RestApi<Resource>(
 #### Rest Calls
 
 ```swift
-let resources = try await service.get()
-let resource = try await service.get(resourceId: "id")
-let newDummy = try await service.post(resource: anObject)
-let updatedDummy = try await service.put(resourceId: "id", resource: anObject)
-let updatedDummy = try await service.patch(payload: ["key": "value"])
+let resources: [Resource] = try await service.get()
+let resource: Resource = try await service.get(resourceId: "id")
+let newResource: Resource? = try await service.post(resource: Resource())
+let updatedResource: Resource? = try await service.put(resourceId: "id", resource: Resource())
+let updatedResource: Resource? = try await service.patch(payload: ["key": "value"])
 try await service.delete(resourceId: "id")
 ```
 
@@ -52,31 +52,43 @@ try await service.delete(resourceId: "id")
 
 #### SwiftUI View Example:
 
-```javascript
+```swift
 import SwiftUI
 import RestApi
 
-struct Dummy: Codable {
-    let id: String
+struct Post: Codable, Hashable, Identifiable {
+    let id: Int
+    let userId: Int
+    let title: String
+    let body: String
 }
 
-private class DummyViewModel: ObservableObject {
-    private let service = RestApi<Dummy>(baseUrl: "https://url.com", path: "dummies")
-    @Published private(set) var dummies = [Dummy]()
-    @MainActor func getDummies() async {
+class PostsViewModel: ObservableObject {
+    private let service = RestApi(baseUrl: "https://jsonplaceholder.typicode.com", path: "posts")
+    @Published private(set) var posts = [Post]()
+    @MainActor func getPosts() async {
         do {
-            let dummies = try await service.get()
-            self.dummies = dummies
+            self.posts = try await service.get()
         } catch {
             debugPrint(error.localizedDescription)
         }
     }
 }
 
-struct DummyView: View {
-    @ObservedObject private var viewModel = DummyViewModel()
+struct PostsView: View {
+    @ObservedObject private var viewModel = PostsViewModel()
     var body: some View {
-        Text("Dummies count: \(viewModel.dummies.count)")
+        List(viewModel.posts, id: \.id) { post in
+            NavigationLink {
+                PostView(postId: post.id)
+            } label: {
+                Text(post.title)
+            }
+        }
+        .navigationTitle("Posts")
+        .task {
+            await viewModel.getPosts()
+        }
     }
 }
 ```

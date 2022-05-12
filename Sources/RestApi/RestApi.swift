@@ -123,6 +123,32 @@ open class RestApi {
     ///   - path: An optional string that will be concatenated with url, and will be used in the request url. If it's nil then self.path will be used.
     ///   - suffix: An optional string that will be concatenated with url and path.
     ///   - params: An optional dictionary of query parameters that will be used in the request url.
+    ///   - resource: An optional object that will be used in body request.
+    ///   - header: A dictionary that will be apprend to self.header dictionary and will be used as header in the request.
+    ///   - debug: A boolean flag that will print debug logs if true.
+    public func post<T: Codable>(
+        url: String? = nil,
+        path: String? = nil,
+        suffix: String? = nil,
+        params: [String: String]? = nil,
+        resource: T? = nil,
+        header: [String: String]? = nil,
+        debug: Bool? = nil
+    ) async throws {
+        let url = try buildUrl(url: url, path: path, suffix: suffix, params: params)
+        var urlRequest = try buildUrlRequest(url: url, verb: .post, header: header)
+        if let resource = resource {
+            urlRequest.httpBody = try JSONEncoder().encode(resource)
+        }
+        let _ = try await data(for: urlRequest, debug: debug)
+    }
+    
+    /// A function that do an asynchronous throwable post request, accepts an resource parameter and returns an optional object.
+    /// - Parameters:
+    ///   - url: An optional string that will be concatenated with path, and will be used in the request url. If it's nil then self.baseUrl will be used.
+    ///   - path: An optional string that will be concatenated with url, and will be used in the request url. If it's nil then self.path will be used.
+    ///   - suffix: An optional string that will be concatenated with url and path.
+    ///   - params: An optional dictionary of query parameters that will be used in the request url.
     ///   - payload: An optional dictionary that will be used in body request.
     ///   - header: A dictionary that will be apprend to self.header dictionary and will be used as header in the request.
     ///   - debug: A boolean flag that will print debug logs if true.
@@ -143,6 +169,32 @@ open class RestApi {
         }
         let data = try await data(for: urlRequest, debug: debug)
         return try? JSONDecoder().decode(T.self, from: data)
+    }
+    
+    /// A function that do an asynchronous throwable post request, accepts an resource parameter and returns an optional object.
+    /// - Parameters:
+    ///   - url: An optional string that will be concatenated with path, and will be used in the request url. If it's nil then self.baseUrl will be used.
+    ///   - path: An optional string that will be concatenated with url, and will be used in the request url. If it's nil then self.path will be used.
+    ///   - suffix: An optional string that will be concatenated with url and path.
+    ///   - params: An optional dictionary of query parameters that will be used in the request url.
+    ///   - payload: An optional dictionary that will be used in body request.
+    ///   - header: A dictionary that will be apprend to self.header dictionary and will be used as header in the request.
+    ///   - debug: A boolean flag that will print debug logs if true.
+    public func post(
+        url: String? = nil,
+        path: String? = nil,
+        suffix: String? = nil,
+        params: [String: String]? = nil,
+        payload: [String: Any]? = nil,
+        header: [String: String]? = nil,
+        debug: Bool? = nil
+    ) async throws {
+        let url = try buildUrl(url: url, path: path, suffix: suffix, params: params)
+        var urlRequest = try buildUrlRequest(url: url, verb: .post, header: header)
+        if let payload = payload {
+            urlRequest.httpBody = try JSONSerialization.data(withJSONObject: payload)
+        }
+        let _ = try await data(for: urlRequest, debug: debug)
     }
     
     // MARK: - PUT
@@ -184,6 +236,34 @@ open class RestApi {
     ///   - resourceId: An optional string that will be used in the request url unless it's not nil.
     ///   - suffix: An optional string that will be concatenated with url and path.
     ///   - params: An optional dictionary of query parameters that will be used in the request url.
+    ///   - resource: An optional object that will be used in body request.
+    ///   - header: A dictionary that will be apprend to self.header dictionary and will be used as header in the request.
+    ///   - debug: A boolean flag that will print debug logs if true.
+    public func put<T: Codable>(
+        url: String? = nil,
+        path: String? = nil,
+        resourceId: String? = nil,
+        suffix: String? = nil,
+        params: [String: String]? = nil,
+        resource: T? = nil,
+        header: [String: String]? = nil,
+        debug: Bool? = nil
+    ) async throws {
+        let url = try buildUrl(url: url, path: path, resourceId: resourceId, suffix: suffix, params: params)
+        var urlRequest = try buildUrlRequest(url: url, verb: .put, header: header)
+        if let resource = resource {
+            urlRequest.httpBody = try JSONEncoder().encode(resource)
+        }
+        let _ = try await data(for: urlRequest, debug: debug)
+    }
+    
+    /// A function that do an asynchronous throwable put request, accepts an resourceId parameter and returns an optional object.
+    /// - Parameters:
+    ///   - url: An optional string that will be concatenated with path, and will be used in the request url. If it's nil then self.baseUrl will be used.
+    ///   - path: An optional string that will be concatenated with url, and will be used in the request url. If it's nil then self.path will be used.
+    ///   - resourceId: An optional string that will be used in the request url unless it's not nil.
+    ///   - suffix: An optional string that will be concatenated with url and path.
+    ///   - params: An optional dictionary of query parameters that will be used in the request url.
     ///   - payload: An optional dictionary that will be used in body request.
     ///   - header: A dictionary that will be apprend to self.header dictionary and will be used as header in the request.
     ///   - debug: A boolean flag that will print debug logs if true.
@@ -205,6 +285,34 @@ open class RestApi {
         }
         let data = try await data(for: urlRequest, debug: debug)
         return try? JSONDecoder().decode(T.self, from: data)
+    }
+    
+    /// A function that do an asynchronous throwable put request, accepts an resourceId parameter and returns an optional object.
+    /// - Parameters:
+    ///   - url: An optional string that will be concatenated with path, and will be used in the request url. If it's nil then self.baseUrl will be used.
+    ///   - path: An optional string that will be concatenated with url, and will be used in the request url. If it's nil then self.path will be used.
+    ///   - resourceId: An optional string that will be used in the request url unless it's not nil.
+    ///   - suffix: An optional string that will be concatenated with url and path.
+    ///   - params: An optional dictionary of query parameters that will be used in the request url.
+    ///   - payload: An optional dictionary that will be used in body request.
+    ///   - header: A dictionary that will be apprend to self.header dictionary and will be used as header in the request.
+    ///   - debug: A boolean flag that will print debug logs if true.
+    public func put(
+        url: String? = nil,
+        path: String? = nil,
+        resourceId: String? = nil,
+        suffix: String? = nil,
+        params: [String: String]? = nil,
+        payload: [String: Any]? = nil,
+        header: [String: String]? = nil,
+        debug: Bool? = nil
+    ) async throws {
+        let url = try buildUrl(url: url, path: path, resourceId: resourceId, suffix: suffix, params: params)
+        var urlRequest = try buildUrlRequest(url: url, verb: .put, header: header)
+        if let payload = payload {
+            urlRequest.httpBody = try JSONSerialization.data(withJSONObject: payload)
+        }
+        let _ = try await data(for: urlRequest, debug: debug)
     }
     
     
@@ -247,6 +355,34 @@ open class RestApi {
     ///   - resourceId: An optional string that will be used in the request url unless it's not nil.
     ///   - suffix: An optional string that will be concatenated with url and path.
     ///   - params: An optional dictionary of query parameters that will be used in the request url.
+    ///   - resource: An optional object that will be used in body request.
+    ///   - header: A dictionary that will be apprend to self.header dictionary and will be used as header in the request.
+    ///   - debug: A boolean flag that will print debug logs if true.
+    public func patch<T: Codable>(
+        url: String? = nil,
+        path: String? = nil,
+        resourceId: String? = nil,
+        suffix: String? = nil,
+        params: [String: String]? = nil,
+        resource: T? = nil,
+        header: [String: String]? = nil,
+        debug: Bool? = nil
+    ) async throws {
+        let url = try buildUrl(url: url, path: path, resourceId: resourceId, suffix: suffix, params: params)
+        var urlRequest = try buildUrlRequest(url: url, verb: .patch, header: header)
+        if let resource = resource {
+            urlRequest.httpBody = try JSONEncoder().encode(resource)
+        }
+        let _ = try await data(for: urlRequest, debug: debug)
+    }
+    
+    /// A function that do an asynchronous throwable patch request, accepts an resourceId parameter and returns an optional object.
+    /// - Parameters:
+    ///   - url: An optional string that will be concatenated with path, and will be used in the request url. If it's nil then self.baseUrl will be used.
+    ///   - path: An optional string that will be concatenated with url, and will be used in the request url. If it's nil then self.path will be used.
+    ///   - resourceId: An optional string that will be used in the request url unless it's not nil.
+    ///   - suffix: An optional string that will be concatenated with url and path.
+    ///   - params: An optional dictionary of query parameters that will be used in the request url.
     ///   - payload: An optional dictionary that will be used in body request.
     ///   - header: A dictionary that will be apprend to self.header dictionary and will be used as header in the request.
     ///   - debug: A boolean flag that will print debug logs if true.
@@ -268,6 +404,34 @@ open class RestApi {
         }
         let data = try await data(for: urlRequest, debug: debug)
         return try? JSONDecoder().decode(T.self, from: data)
+    }
+    
+    /// A function that do an asynchronous throwable patch request, accepts an resourceId parameter and returns an optional object.
+    /// - Parameters:
+    ///   - url: An optional string that will be concatenated with path, and will be used in the request url. If it's nil then self.baseUrl will be used.
+    ///   - path: An optional string that will be concatenated with url, and will be used in the request url. If it's nil then self.path will be used.
+    ///   - resourceId: An optional string that will be used in the request url unless it's not nil.
+    ///   - suffix: An optional string that will be concatenated with url and path.
+    ///   - params: An optional dictionary of query parameters that will be used in the request url.
+    ///   - payload: An optional dictionary that will be used in body request.
+    ///   - header: A dictionary that will be apprend to self.header dictionary and will be used as header in the request.
+    ///   - debug: A boolean flag that will print debug logs if true.
+    public func patch(
+        url: String? = nil,
+        path: String? = nil,
+        resourceId: String? = nil,
+        suffix: String? = nil,
+        params: [String: String]? = nil,
+        payload: [String: Any]? = nil,
+        header: [String: String]? = nil,
+        debug: Bool? = nil
+    ) async throws {
+        let url = try buildUrl(url: url, path: path, resourceId: resourceId, suffix: suffix, params: params)
+        var urlRequest = try buildUrlRequest(url: url, verb: .patch, header: header)
+        if let payload = payload {
+            urlRequest.httpBody = try JSONSerialization.data(withJSONObject: payload)
+        }
+        let _ = try await data(for: urlRequest, debug: debug)
     }
     
     // MARK: - DELETE
@@ -295,6 +459,29 @@ open class RestApi {
         let urlRequest = try buildUrlRequest(url: url, verb: .delete, header: header)
         let data = try await data(for: urlRequest, debug: debug)
         return try? JSONDecoder().decode(T.self, from: data)
+    }
+    
+    /// A function that do an asynchronous throwable delete request, accepts an resourceId parameter and returns an optional object.
+    /// - Parameters:
+    ///   - url: An optional string that will be concatenated with path, and will be used in the request url. If it's nil then self.baseUrl will be used.
+    ///   - path: An optional string that will be concatenated with url, and will be used in the request url. If it's nil then self.path will be used.
+    ///   - resourceId: An optional string that will be used in the request url unless it's not nil.
+    ///   - suffix: An optional string that will be concatenated with url and path.
+    ///   - params: An optional dictionary of query parameters that will be used in the request url.
+    ///   - header: A dictionary that will be apprend to self.header dictionary and will be used as header in the request.
+    ///   - debug: A boolean flag that will print debug logs if true.
+    public func delete(
+        url: String? = nil,
+        path: String? = nil,
+        resourceId: String? = nil,
+        suffix: String? = nil,
+        params: [String: String]? = nil,
+        header: [String: String]? = nil,
+        debug: Bool? = nil
+    ) async throws {
+        let url = try buildUrl(url: url, path: path, resourceId: resourceId, suffix: suffix, params: params)
+        let urlRequest = try buildUrlRequest(url: url, verb: .delete, header: header)
+        let _ = try await data(for: urlRequest, debug: debug)
     }
     
     // MARK: - COMMON
