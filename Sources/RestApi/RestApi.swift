@@ -10,7 +10,7 @@ extension URLSession: URLSessionProtocol {
 }
 
 /// A class that provides easy REST requests with generics resources.
-open class RestApi<T: Codable> {
+open class RestApi {
     
     /// An enum that contains all the error cases that RestApi suposes to throws.
     public enum RestApiError: Error {
@@ -59,33 +59,8 @@ open class RestApi<T: Codable> {
         self.debug = debug
         self.urlSession = urlSession
     }
-
-    // MARK: - GET ALL
     
-    /// A function that do an asynchronous throwable get request and returns a list of objects.
-    /// - Parameters:
-    ///   - url: An optional string that will be concatenated with path, and will be used in the request url. If it's nil then self.baseUrl will be used.
-    ///   - path: An optional string that will be concatenated with url, and will be used in the request url. If it's nil then self.path will be used.
-    ///   - suffix: An optional string that will be concatenated with url and path.
-    ///   - params: An optional dictionary of query parameters that will be used in the request url.
-    ///   - header: A dictionary that will be apprend to self.header dictionary and will be used as header in the request.
-    ///   - debug: A boolean flag that will print debug logs if true.
-    /// - Returns: A list of objects of resource type.
-    public func get(
-        url: String? = nil,
-        path: String? = nil,
-        suffix: String? = nil,
-        params: [String: String]? = nil,
-        header: [String: String]? = nil,
-        debug: Bool? = nil
-    ) async throws -> [T] {
-        let url = try buildUrl(url: url, path: path, suffix: suffix, params: params)
-        let urlRequest = try buildUrlRequest(url: url, verb: .get, header: header)
-        let data = try await data(for: urlRequest, debug: debug)
-        return try JSONDecoder().decode([T].self, from: data)
-    }
-    
-    // MARK: - GET ONE
+    // MARK: - GET
     
     /// A function that do an asynchronous throwable get request, accepts an resourceId parameter and returns an object.
     /// - Parameters:
@@ -97,10 +72,10 @@ open class RestApi<T: Codable> {
     ///   - header: A dictionary that will be apprend to self.header dictionary and will be used as header in the request.
     ///   - debug: A boolean flag that will print debug logs if true.
     /// - Returns: An object of resource type.
-    public func get(
+    public func get<T: Codable>(
         url: String? = nil,
         path: String? = nil,
-        resourceId: String?,
+        resourceId: String? = nil,
         suffix: String? = nil,
         params: [String: String]? = nil,
         header: [String: String]? = nil,
@@ -124,12 +99,12 @@ open class RestApi<T: Codable> {
     ///   - header: A dictionary that will be apprend to self.header dictionary and will be used as header in the request.
     ///   - debug: A boolean flag that will print debug logs if true.
     /// - Returns: An optional object of resource type.
-    public func post(
+    public func post<T: Codable, U: Codable>(
         url: String? = nil,
         path: String? = nil,
         suffix: String? = nil,
         params: [String: String]? = nil,
-        resource: T? = nil,
+        resource: U? = nil,
         header: [String: String]? = nil,
         debug: Bool? = nil
     ) async throws -> T? {
@@ -152,7 +127,7 @@ open class RestApi<T: Codable> {
     ///   - header: A dictionary that will be apprend to self.header dictionary and will be used as header in the request.
     ///   - debug: A boolean flag that will print debug logs if true.
     /// - Returns: An optional object of resource type.
-    public func post(
+    public func post<T: Codable>(
         url: String? = nil,
         path: String? = nil,
         suffix: String? = nil,
@@ -183,13 +158,13 @@ open class RestApi<T: Codable> {
     ///   - header: A dictionary that will be apprend to self.header dictionary and will be used as header in the request.
     ///   - debug: A boolean flag that will print debug logs if true.
     /// - Returns: An optional object of resource type.
-    public func put(
+    public func put<T: Codable, U: Codable>(
         url: String? = nil,
         path: String? = nil,
         resourceId: String? = nil,
         suffix: String? = nil,
         params: [String: String]? = nil,
-        resource: T? = nil,
+        resource: U? = nil,
         header: [String: String]? = nil,
         debug: Bool? = nil
     ) async throws -> T? {
@@ -213,7 +188,7 @@ open class RestApi<T: Codable> {
     ///   - header: A dictionary that will be apprend to self.header dictionary and will be used as header in the request.
     ///   - debug: A boolean flag that will print debug logs if true.
     /// - Returns: An optional object of resource type.
-    public func put(
+    public func put<T: Codable>(
         url: String? = nil,
         path: String? = nil,
         resourceId: String? = nil,
@@ -246,13 +221,13 @@ open class RestApi<T: Codable> {
     ///   - header: A dictionary that will be apprend to self.header dictionary and will be used as header in the request.
     ///   - debug: A boolean flag that will print debug logs if true.
     /// - Returns: An optional object of resource type.
-    public func patch(
+    public func patch<T: Codable, U: Codable>(
         url: String? = nil,
         path: String? = nil,
         resourceId: String? = nil,
         suffix: String? = nil,
         params: [String: String]? = nil,
-        resource: T? = nil,
+        resource: U? = nil,
         header: [String: String]? = nil,
         debug: Bool? = nil
     ) async throws -> T? {
@@ -276,7 +251,7 @@ open class RestApi<T: Codable> {
     ///   - header: A dictionary that will be apprend to self.header dictionary and will be used as header in the request.
     ///   - debug: A boolean flag that will print debug logs if true.
     /// - Returns: An optional object of resource type.
-    public func patch(
+    public func patch<T: Codable>(
         url: String? = nil,
         path: String? = nil,
         resourceId: String? = nil,
@@ -307,7 +282,7 @@ open class RestApi<T: Codable> {
     ///   - header: A dictionary that will be apprend to self.header dictionary and will be used as header in the request.
     ///   - debug: A boolean flag that will print debug logs if true.
     /// - Returns: An optional object of resource type.
-    public func delete(
+    public func delete<T: Codable>(
         url: String? = nil,
         path: String? = nil,
         resourceId: String? = nil,
