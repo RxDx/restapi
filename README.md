@@ -44,7 +44,7 @@ let resources: [Resource] = try await service.get()
 let resource: Resource = try await service.get(resourceId: "id")
 let newResource: Resource? = try await service.post(resource: Resource())
 let updatedResource: Resource? = try await service.put(resourceId: "id", resource: Resource())
-let updatedResource: Resource? = try await service.patch(payload: ["key": "value"])
+let updatedResource: Resource? = try await service.patch(resourceId: "id", payload: ["key": "value"])
 try await service.delete(resourceId: "id")
 ```
 
