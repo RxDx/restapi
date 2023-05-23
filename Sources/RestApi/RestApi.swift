@@ -9,6 +9,25 @@ public protocol URLSessionProtocol {
 extension URLSession: URLSessionProtocol {
 }
 
+/// A RestApiEncoder that contains the method used to serialize data from network
+public protocol RestApiEncoder {
+    func encode<T>(_ value: T) throws -> Data where T : Encodable
+}
+
+/// A JSONEncoder extension that conforms to RestApiEncoder
+extension JSONEncoder: RestApiEncoder {
+}
+
+/// A RestApiDecoder that contains the method used to deserialize data to network
+public protocol RestApiDecoder {
+    func decode<T>(_ type: T.Type, from data: Data) throws -> T where T : Decodable
+}
+
+/// A JSONDecoder extension that conforms to RestApiDecoder
+extension JSONDecoder: RestApiDecoder {
+}
+
+
 /// A class that provides easy REST requests with generics resources.
 open class RestApi {
     
@@ -36,6 +55,10 @@ open class RestApi {
     public private(set) var debug: Bool
     /// A URLSession that will request data.
     private let urlSession: URLSessionProtocol
+    /// A Encoder that will serialize your data.
+    private let encoder: RestApiEncoder
+    /// A Decoder that will deserialize your data.
+    private let decoder: RestApiDecoder
     
     /// An init that is used to instanciate RestApi objects.
     /// - Parameters:
@@ -51,13 +74,17 @@ open class RestApi {
             "Accept": "application/json; charset=utf-8"
         ],
         debug: Bool = false,
-        urlSession: URLSessionProtocol = URLSession.shared
+        urlSession: URLSessionProtocol = URLSession.shared,
+        encoder: RestApiEncoder = JSONEncoder(),
+        decoder: RestApiDecoder = JSONDecoder()
     ) {
         self.baseUrl = baseUrl
         self.path = path
         self.header = header
         self.debug = debug
         self.urlSession = urlSession
+        self.encoder = encoder
+        self.decoder = decoder
     }
     
     // MARK: - GET
@@ -84,7 +111,7 @@ open class RestApi {
         let url = try buildUrl(url: url, path: path, resourceId: resourceId, suffix: suffix, params: params)
         let urlRequest = try buildUrlRequest(url: url, verb: .get, header: header)
         let data = try await data(for: urlRequest, debug: debug)
-        return try JSONDecoder().decode(T.self, from: data)
+        return try decoder.decode(T.self, from: data)
     }
     
     // MARK: - POST
@@ -111,10 +138,10 @@ open class RestApi {
         let url = try buildUrl(url: url, path: path, suffix: suffix, params: params)
         var urlRequest = try buildUrlRequest(url: url, verb: .post, header: header)
         if let resource = resource {
-            urlRequest.httpBody = try JSONEncoder().encode(resource)
+            urlRequest.httpBody = try encoder.encode(resource)
         }
         let data = try await data(for: urlRequest, debug: debug)
-        return try? JSONDecoder().decode(T.self, from: data)
+        return try? decoder.decode(T.self, from: data)
     }
     
     /// A function that do an asynchronous throwable post request, accepts an resource parameter and returns an optional object.
@@ -138,7 +165,7 @@ open class RestApi {
         let url = try buildUrl(url: url, path: path, suffix: suffix, params: params)
         var urlRequest = try buildUrlRequest(url: url, verb: .post, header: header)
         if let resource = resource {
-            urlRequest.httpBody = try JSONEncoder().encode(resource)
+            urlRequest.httpBody = try encoder.encode(resource)
         }
         let _ = try await data(for: urlRequest, debug: debug)
     }
@@ -168,7 +195,7 @@ open class RestApi {
             urlRequest.httpBody = try JSONSerialization.data(withJSONObject: payload)
         }
         let data = try await data(for: urlRequest, debug: debug)
-        return try? JSONDecoder().decode(T.self, from: data)
+        return try? decoder.decode(T.self, from: data)
     }
     
     /// A function that do an asynchronous throwable post request, accepts an resource parameter and returns an optional object.
@@ -223,10 +250,10 @@ open class RestApi {
         let url = try buildUrl(url: url, path: path, resourceId: resourceId, suffix: suffix, params: params)
         var urlRequest = try buildUrlRequest(url: url, verb: .put, header: header)
         if let resource = resource {
-            urlRequest.httpBody = try JSONEncoder().encode(resource)
+            urlRequest.httpBody = try encoder.encode(resource)
         }
         let data = try await data(for: urlRequest, debug: debug)
-        return try? JSONDecoder().decode(T.self, from: data)
+        return try? decoder.decode(T.self, from: data)
     }
     
     /// A function that do an asynchronous throwable put request, accepts an resourceId parameter and returns an optional object.
@@ -252,7 +279,7 @@ open class RestApi {
         let url = try buildUrl(url: url, path: path, resourceId: resourceId, suffix: suffix, params: params)
         var urlRequest = try buildUrlRequest(url: url, verb: .put, header: header)
         if let resource = resource {
-            urlRequest.httpBody = try JSONEncoder().encode(resource)
+            urlRequest.httpBody = try encoder.encode(resource)
         }
         let _ = try await data(for: urlRequest, debug: debug)
     }
@@ -284,7 +311,7 @@ open class RestApi {
             urlRequest.httpBody = try JSONSerialization.data(withJSONObject: payload)
         }
         let data = try await data(for: urlRequest, debug: debug)
-        return try? JSONDecoder().decode(T.self, from: data)
+        return try? decoder.decode(T.self, from: data)
     }
     
     /// A function that do an asynchronous throwable put request, accepts an resourceId parameter and returns an optional object.
@@ -342,10 +369,10 @@ open class RestApi {
         let url = try buildUrl(url: url, path: path, resourceId: resourceId, suffix: suffix, params: params)
         var urlRequest = try buildUrlRequest(url: url, verb: .patch, header: header)
         if let resource = resource {
-            urlRequest.httpBody = try JSONEncoder().encode(resource)
+            urlRequest.httpBody = try encoder.encode(resource)
         }
         let data = try await data(for: urlRequest, debug: debug)
-        return try? JSONDecoder().decode(T.self, from: data)
+        return try? decoder.decode(T.self, from: data)
     }
     
     /// A function that do an asynchronous throwable patch request, accepts an resourceId parameter and returns an optional object.
@@ -371,7 +398,7 @@ open class RestApi {
         let url = try buildUrl(url: url, path: path, resourceId: resourceId, suffix: suffix, params: params)
         var urlRequest = try buildUrlRequest(url: url, verb: .patch, header: header)
         if let resource = resource {
-            urlRequest.httpBody = try JSONEncoder().encode(resource)
+            urlRequest.httpBody = try encoder.encode(resource)
         }
         let _ = try await data(for: urlRequest, debug: debug)
     }
@@ -403,7 +430,7 @@ open class RestApi {
             urlRequest.httpBody = try JSONSerialization.data(withJSONObject: payload)
         }
         let data = try await data(for: urlRequest, debug: debug)
-        return try? JSONDecoder().decode(T.self, from: data)
+        return try? decoder.decode(T.self, from: data)
     }
     
     /// A function that do an asynchronous throwable patch request, accepts an resourceId parameter and returns an optional object.
@@ -458,7 +485,7 @@ open class RestApi {
         let url = try buildUrl(url: url, path: path, resourceId: resourceId, suffix: suffix, params: params)
         let urlRequest = try buildUrlRequest(url: url, verb: .delete, header: header)
         let data = try await data(for: urlRequest, debug: debug)
-        return try? JSONDecoder().decode(T.self, from: data)
+        return try? decoder.decode(T.self, from: data)
     }
     
     /// A function that do an asynchronous throwable delete request, accepts an resourceId parameter and returns an optional object.
