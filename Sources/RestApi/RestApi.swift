@@ -33,7 +33,8 @@ open class RestApi {
     
     /// An enum that contains all the error cases that RestApi suposes to throws.
     public enum RestApiError: Error {
-        case invalidUrl
+        case invalidUrl(String)
+        case httpCode(Int, Data)
     }
     
     /// An enum that contains all the verbs supported by RestApi.
@@ -535,7 +536,7 @@ open class RestApi {
             urlString += suffix
         }
         guard var urlComponents = URLComponents(string: urlString) else {
-            throw RestApiError.invalidUrl
+            throw RestApiError.invalidUrl(urlString)
         }
         if let params = params {
             urlComponents.queryItems = params.map {
@@ -543,7 +544,7 @@ open class RestApi {
             }
         }
         guard let url = urlComponents.url else {
-            throw RestApiError.invalidUrl
+            throw RestApiError.invalidUrl(urlString)
         }
         return url
     }
@@ -588,10 +589,15 @@ open class RestApi {
             }
         }
         let (data, response) = try await urlSession.data(for: urlRequest, delegate: nil)
+        let responseStatusCode = (response as? HTTPURLResponse)?.statusCode
         if debug {
             debugPrint("Response: \(response.debugDescription)")
+            debugPrint("Response StatusCode: \(responseStatusCode ?? 0)")
             debugPrint("Response Data:")
             debugPrint(String(data: data, encoding: .utf8) ?? "Unknown response data")
+        }
+        if let responseStatusCode, responseStatusCode >= 400 {
+            throw RestApiError.httpCode(responseStatusCode, data)
         }
         return data
     }
