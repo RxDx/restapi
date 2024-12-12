@@ -7,6 +7,12 @@ jobs:
     steps:
       - run: echo "🐧 The job was automatically triggered by a ${{ github.event_name }} event."
       - run: echo "🍏 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
+      - uses: SwiftyLab/setup-swift@latest
+      - name: Get swift version
+        run: swift --version
+      - name: Get swift version in macOS
+        if: runner.os == 'macOS'
+        run: xcrun --toolchain ${{ env.TOOLCHAINS }} swift --version
       - run: echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
       - name: Check out repository code
         uses: actions/checkout@v3
@@ -19,5 +25,5 @@ jobs:
         run: swift build -v
       - run: echo "🖥️ The workflow is now ready to test your code on the runner."
       - name: Run tests
-        run: swift test -v
+        run: swift test -v --disable-xctest --enable-swift-testing
       - run: echo "🎉 This job's status is ${{ job.status }}."
