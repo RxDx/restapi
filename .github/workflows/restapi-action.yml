@@ -19,5 +19,5 @@ jobs:
         run: swift build -v
       - run: echo "🖥️ The workflow is now ready to test your code on the runner."
       - name: Run tests
-        run: swift test -v
+        run: swift test -v --disable-xctest --enable-swift-testing
       - run: echo "🎉 This job's status is ${{ job.status }}."
